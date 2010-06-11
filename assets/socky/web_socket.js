@@ -1,10 +1,10 @@
 // Copyright: Hiroshi Ichikawa <http://gimite.net/en/>
-// Lincense: New BSD Lincense
+// License: New BSD License
 // Reference: http://dev.w3.org/html5/websockets/
 // Reference: http://tools.ietf.org/html/draft-hixie-thewebsocketprotocol
 
 (function() {
-
+  
   if (window.WebSocket) return;
 
   var console = window.console;
@@ -21,7 +21,7 @@
     }
     return false;
   }
-
+  
   if (!hasFlash()) {
     console.error("Flash Player is not installed.");
     return;
@@ -248,9 +248,8 @@
 
   WebSocket.__initialize = function() {
     if (!WebSocket.__swfLocation) {
-      //console.error("[WebSocket] set WebSocket.__swfLocation to location of WebSocketMain.swf");
-      //return;
-      WebSocket.__swfLocation = "/javascripts/socky/WebSocketMain.swf";
+      console.error("[WebSocket] set WebSocket.__swfLocation to location of WebSocketMain.swf");
+      return;
     }
     var container = document.createElement("div");
     container.id = "webSocketContainer";
@@ -308,5 +307,5 @@
   } else {
     window.attachEvent("onload", WebSocket.__initialize);
   }
-
+  
 })();
