@@ -70,17 +70,21 @@ module Socky
           @socket = WebSocket.new("#{scheme}://#{address[:host]}:#{address[:port]}/?admin=1")
           @socket.send(hash.to_json)
           res << @socket.receive if response
+        rescue
+          puts "ERROR: Connection to server at '#{scheme}://#{address[:host]}:#{address[:port]}' failed"
         ensure
-          @socket.close if @socket
+          @socket.close if @socket && !@socket.tcp_socket.closed?
         end
       end
       res.collect {|r| ActiveSupport::JSON.decode(r) } if response
     end
 
-    private
-
     def hosts
       CONFIG[:hosts]
+    end
+
+    def random_host
+      hosts[rand(hosts.size)] # Rails 3 break Array#rand()
     end
 
   end

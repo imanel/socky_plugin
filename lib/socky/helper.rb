@@ -2,7 +2,7 @@ module Socky
   module Helper
 
     def socky(options = {})
-      host = Socky::CONFIG[:hosts].first
+      host = Socky.random_host
       options = {
         :host                 => (host[:secure] ? "wss://" : "ws://") + host[:host],
         :port                 => host[:port],
