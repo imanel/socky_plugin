@@ -4,48 +4,73 @@
 
 require "socket"
 require "uri"
+require "digest/md5"
+require 'openssl'
 
-module Socky
-  class WebSocket
+
+class WebSocket
 
     class << self
-      attr_accessor(:debug)
+
+        attr_accessor(:debug)
+
     end
 
     class Error < RuntimeError
+
     end
 
     def initialize(arg, params = {})
-      uri = arg.is_a?(String) ? URI.parse(arg) : arg
-      if uri.scheme == "wss"
-        raise(WebSocket::Error, "wss scheme is unimplemented")
-      elsif uri.scheme != "ws"
-        raise(WebSocket::Error, "unsupported scheme: #{uri.scheme}")
-      end
-      @path = (uri.path.empty? ? "/" : uri.path) + (uri.query ? "?" + uri.query : "")
-      host = uri.host + (uri.port == 80 ? "" : ":#{uri.port}")
-      origin = params[:origin] || "http://#{uri.host}"
-      @socket = TCPSocket.new(uri.host, uri.port || 80)
-      write(
-        "GET #{@path} HTTP/1.1\r\n" +
-        "Upgrade: WebSocket\r\n" +
-        "Connection: Upgrade\r\n" +
-        "Host: #{host}\r\n" +
-        "Origin: #{origin}\r\n" +
-        "\r\n")
-      flush
-      line = gets().chomp()
-      raise(WebSocket::Error, "bad response: #{line}") if !(line =~ /\AHTTP\/1.1 101 /n)
-      read_header()
-      if @header["WebSocket-Origin"] != origin
-        raise(WebSocket::Error,
-          "origin doesn't match: '#{@header["WebSocket-Origin"]}' != '#{origin}'")
-      end
-      @handshaked = true
 
+        uri = arg.is_a?(String) ? URI.parse(arg) : arg
+
+        raise(WebSocket::Error, "unsupported scheme: #{uri.scheme}") unless ["ws","wss"].include?(uri.scheme)
+
+        @path = (uri.path.empty? ? "/" : uri.path) + (uri.query ? "?" + uri.query : "")
+        host = uri.host + (uri.port == 80 ? "" : ":#{uri.port}")
+        origin = params[:origin] || "http://#{uri.host}"
+        key1 = generate_key()
+        key2 = generate_key()
+        key3 = generate_key3()
+
+        socket = TCPSocket.new(uri.host, uri.port || 80)
+
+        if uri.scheme == "ws"
+          @socket = socket
+        else
+          @socket = ssl_handshake(socket)
+        end
+
+        write(
+          "GET #{@path} HTTP/1.1\r\n" +
+          "Upgrade: WebSocket\r\n" +
+          "Connection: Upgrade\r\n" +
+          "Host: #{host}\r\n" +
+          "Origin: #{origin}\r\n" +
+          "Sec-WebSocket-Key1: #{key1}\r\n" +
+          "Sec-WebSocket-Key2: #{key2}\r\n" +
+          "\r\n" +
+          "#{key3}")
+        flush()
+
+        line = gets().chomp()
+        raise(WebSocket::Error, "bad response: #{line}") if !(line =~ /\AHTTP\/1.1 101 /n)
+        read_header()
+        if @header["Sec-WebSocket-Origin"] != origin
+          raise(WebSocket::Error,
+            "origin doesn't match: '#{@header["WebSocket-Origin"]}' != '#{origin}'")
+        end
+        reply_digest = read(16)
+        expected_digest = security_digest(key1, key2, key3)
+        if reply_digest != expected_digest
+          raise(WebSocket::Error,
+            "security digest doesn't match: %p != %p" % [reply_digest, expected_digest])
+        end
+        @handshaked = true
+
+      end
       @received = []
       @buffer = ""
-    end
 
     attr_reader(:header, :path)
 
@@ -55,7 +80,7 @@ module Socky
       end
       data = force_encoding(data.dup(), "ASCII-8BIT")
       write("\x00#{data}\xff")
-      flush
+      flush()
     end
 
     def receive()
@@ -70,11 +95,25 @@ module Socky
       return force_encoding($1, "UTF-8")
     end
 
+    def tcp_socket
+      return @socket
+    end
+
+    def host
+      return @header["Host"]
+    end
+
+    def origin
+      return @header["Origin"]
+    end
+
     def close()
       @socket.close()
     end
 
   private
+
+    NOISE_CHARS = ("\x21".."\x2f").to_a() + ("\x3a".."\x7e").to_a()
 
     def read_header()
       @header = {}
@@ -100,6 +139,12 @@ module Socky
       return line
     end
 
+    def read(num_bytes)
+      str = @socket.read(num_bytes)
+      $stderr.printf("recv> %p\n", str) if WebSocket.debug
+      return str
+    end
+
     def write(data)
       if WebSocket.debug
         data.scan(/\G(.*?(\n|\z))/n) do
@@ -109,8 +154,40 @@ module Socky
       @socket.write(data)
     end
 
-    def flush
+    def flush()
       @socket.flush()
+    end
+
+    def security_digest(key1, key2, key3)
+      bytes1 = websocket_key_to_bytes(key1)
+      bytes2 = websocket_key_to_bytes(key2)
+      return Digest::MD5.digest(bytes1 + bytes2 + key3)
+    end
+
+    def generate_key()
+      spaces = 1 + rand(12)
+      max = 0xffffffff / spaces
+      number = rand(max + 1)
+      key = (number * spaces).to_s()
+      (1 + rand(12)).times() do
+        char = NOISE_CHARS[rand(NOISE_CHARS.size)]
+        pos = rand(key.size + 1)
+        key[pos...pos] = char
+      end
+      spaces.times() do
+        pos = 1 + rand(key.size - 1)
+        key[pos...pos] = " "
+      end
+      return key
+    end
+
+    def generate_key3()
+      return [rand(0x100000000)].pack("N") + [rand(0x100000000)].pack("N")
+    end
+
+    def websocket_key_to_bytes(key)
+      num = key.gsub(/[^\d]/n, "").to_i() / key.scan(/ /).size
+      return [num].pack("N")
     end
 
     def force_encoding(str, encoding)
@@ -121,5 +198,12 @@ module Socky
       end
     end
 
-  end
+    def ssl_handshake(socket)
+      ssl_context = OpenSSL::SSL::SSLContext.new()
+      ssl_socket = OpenSSL::SSL::SSLSocket.new(socket, ssl_context)
+      ssl_socket.sync_close = true
+      ssl_socket.connect
+      ssl_socket
+    end
+
 end

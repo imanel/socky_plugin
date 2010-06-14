@@ -66,8 +66,8 @@ module Socky
       hosts.each do |address|
         begin
           hash[:secret] = address[:secret] if address[:secret]
-
-          @socket = WebSocket.new("ws://#{address[:host]}:#{address[:port]}/?admin=1")
+          scheme = (address[:secure] ? "wss" : "ws")
+          @socket = WebSocket.new("#{scheme}://#{address[:host]}:#{address[:port]}/?admin=1")
           @socket.send(hash.to_json)
           res << @socket.receive if response
         ensure

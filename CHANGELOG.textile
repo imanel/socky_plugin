@@ -1,5 +1,13 @@
 h1. Changelog
 
+h2. Edge
+
+* new features:
+** support for websocket draft 76
+** support for wss/SSL connections
+* bugfixes:
+** none
+
 h2. 0.0.7
 
 * initial release
