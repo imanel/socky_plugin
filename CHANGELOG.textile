@@ -5,6 +5,7 @@ h2. Edge
 * new features:
 ** support for websocket draft 76
 ** support for wss/SSL connections
+** allow multiple socky servers
 * bugfixes:
 ** none
 
