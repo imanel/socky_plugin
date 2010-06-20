@@ -75,7 +75,7 @@ module Socky
           @socket.close if @socket && !@socket.tcp_socket.closed?
         end
       end
-      res.collect {|r| ActiveSupport::JSON.decode(r) } if response
+      res.collect {|r| ActiveSupport::JSON.decode(r)["body"] } if response
     end
 
     def hosts

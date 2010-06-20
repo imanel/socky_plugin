@@ -6,6 +6,7 @@ h2. Edge
 ** support for websocket draft 76
 ** support for wss/SSL connections
 ** allow multiple socky servers
+** socky now sending all messages in JSON format
 * bugfixes:
 ** none
 
