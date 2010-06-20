@@ -1,4 +1,135 @@
 /*
 Copyright 2006 Adobe Systems Incorporated
 */
-function FABridge(a,b){this.target=a;this.remoteTypeCache={};this.remoteInstanceCache={};this.remoteFunctionCache={};this.localFunctionCache={};this.bridgeID=FABridge.nextBridgeID++;this.name=b;this.nextLocalFuncID=0;FABridge.instances[this.name]=this;FABridge.idMap[this.bridgeID]=this;return this}FABridge.TYPE_ASINSTANCE=1;FABridge.TYPE_ASFUNCTION=2;FABridge.TYPE_JSFUNCTION=3;FABridge.TYPE_ANONYMOUS=4;FABridge.initCallbacks={};FABridge.userTypes={};FABridge.addToUserTypes=function(){for(var i=0;i<arguments.length;i++){FABridge.userTypes[arguments[i]]={'typeName':arguments[i],'enriched':false}}}FABridge.argsToArray=function(a){var b=[];for(var i=0;i<a.length;i++){b[i]=a[i]}return b}function instanceFactory(a){this.fb_instance_id=a;return this}function FABridge__invokeJSFunction(a){var b=a[0];var c=a.concat();c.shift();var d=FABridge.extractBridgeFromID(b);return d.invokeLocalFunction(b,c)}FABridge.addInitializationCallback=function(a,b){var c=FABridge.instances[a];if(c!=undefined){b.call(c);return}var d=FABridge.initCallbacks[a];if(d==null){FABridge.initCallbacks[a]=d=[]}d.push(b)}function FABridge__bridgeInitialized(a){var b=document.getElementsByTagName("object");var c=b.length;var d=[];if(c>0){for(var i=0;i<c;i++){if(typeof b[i].SetVariable!="undefined"){d[d.length]=b[i]}}}var e=document.getElementsByTagName("embed");var f=e.length;var g=[];if(f>0){for(var j=0;j<f;j++){if(typeof e[j].SetVariable!="undefined"){g[g.length]=e[j]}}}var h=d.length;var n=g.length;var o="bridgeName="+a;if((h==1&&!n)||(h==1&&n==1)){FABridge.attachBridge(d[0],a)}else if(n==1&&!h){FABridge.attachBridge(g[0],a)}else{var p=false;if(h>1){for(var k=0;k<h;k++){var q=d[k].childNodes;for(var l=0;l<q.length;l++){var r=q[l];if(r.nodeType==1&&r.tagName.toLowerCase()=="param"&&r["name"].toLowerCase()=="flashvars"&&r["value"].indexOf(o)>=0){FABridge.attachBridge(d[k],a);p=true;break}}if(p){break}}}if(!p&&n>1){for(var m=0;m<n;m++){var s=g[m].attributes.getNamedItem("flashVars").nodeValue;if(s.indexOf(o)>=0){FABridge.attachBridge(g[m],a);break}}}}return true}FABridge.nextBridgeID=0;FABridge.instances={};FABridge.idMap={};FABridge.refCount=0;FABridge.extractBridgeFromID=function(a){var b=(a>>16);return FABridge.idMap[b]}FABridge.attachBridge=function(a,b){var c=new FABridge(a,b);FABridge[b]=c;var d=FABridge.initCallbacks[b];if(d==null){return}for(var i=0;i<d.length;i++){d[i].call(c)}delete FABridge.initCallbacks[b]}FABridge.blockedMethods={toString:true,get:true,set:true,call:true};FABridge.prototype={root:function(){return this.deserialize(this.target.getRoot())},releaseASObjects:function(){return this.target.releaseASObjects()},releaseNamedASObject:function(a){if(typeof(a)!="object"){return false}else{var b=this.target.releaseNamedASObject(a.fb_instance_id);return b}},create:function(a){return this.deserialize(this.target.create(a))},makeID:function(a){return(this.bridgeID<<16)+a},getPropertyFromAS:function(a,b){if(FABridge.refCount>0){throw new Error("You are trying to call recursively into the Flash Player which is not allowed. In most cases the JavaScript setTimeout function, can be used as a workaround.");}else{FABridge.refCount++;retVal=this.target.getPropFromAS(a,b);retVal=this.handleError(retVal);FABridge.refCount--;return retVal}},setPropertyInAS:function(a,b,c){if(FABridge.refCount>0){throw new Error("You are trying to call recursively into the Flash Player which is not allowed. In most cases the JavaScript setTimeout function, can be used as a workaround.");}else{FABridge.refCount++;retVal=this.target.setPropInAS(a,b,this.serialize(c));retVal=this.handleError(retVal);FABridge.refCount--;return retVal}},callASFunction:function(a,b){if(FABridge.refCount>0){throw new Error("You are trying to call recursively into the Flash Player which is not allowed. In most cases the JavaScript setTimeout function, can be used as a workaround.");}else{FABridge.refCount++;retVal=this.target.invokeASFunction(a,this.serialize(b));retVal=this.handleError(retVal);FABridge.refCount--;return retVal}},callASMethod:function(a,b,c){if(FABridge.refCount>0){throw new Error("You are trying to call recursively into the Flash Player which is not allowed. In most cases the JavaScript setTimeout function, can be used as a workaround.");}else{FABridge.refCount++;c=this.serialize(c);retVal=this.target.invokeASMethod(a,b,c);retVal=this.handleError(retVal);FABridge.refCount--;return retVal}},invokeLocalFunction:function(a,b){var c;var d=this.localFunctionCache[a];if(d!=undefined){c=this.serialize(d.apply(null,this.deserialize(b)))}return c},getTypeFromName:function(a){return this.remoteTypeCache[a]},createProxy:function(a,b){var c=this.getTypeFromName(b);instanceFactory.prototype=c;var d=new instanceFactory(a);this.remoteInstanceCache[a]=d;return d},getProxy:function(a){return this.remoteInstanceCache[a]},addTypeDataToCache:function(a){newType=new ASProxy(this,a.name);var b=a.accessors;for(var i=0;i<b.length;i++){this.addPropertyToType(newType,b[i])}var c=a.methods;for(var i=0;i<c.length;i++){if(FABridge.blockedMethods[c[i]]==undefined){this.addMethodToType(newType,c[i])}}this.remoteTypeCache[newType.typeName]=newType;return newType},addPropertyToType:function(b,d){var c=d.charAt(0);var e;var f;if(c>="a"&&c<="z"){f="get"+c.toUpperCase()+d.substr(1);e="set"+c.toUpperCase()+d.substr(1)}else{f="get"+d;e="set"+d}b[e]=function(a){this.bridge.setPropertyInAS(this.fb_instance_id,d,a)}b[f]=function(){return this.bridge.deserialize(this.bridge.getPropertyFromAS(this.fb_instance_id,d))}},addMethodToType:function(a,b){a[b]=function(){return this.bridge.deserialize(this.bridge.callASMethod(this.fb_instance_id,b,FABridge.argsToArray(arguments)))}},getFunctionProxy:function(a){var b=this;if(this.remoteFunctionCache[a]==null){this.remoteFunctionCache[a]=function(){b.callASFunction(a,FABridge.argsToArray(arguments))}}return this.remoteFunctionCache[a]},getFunctionID:function(a){if(a.__bridge_id__==undefined){a.__bridge_id__=this.makeID(this.nextLocalFuncID++);this.localFunctionCache[a.__bridge_id__]=a}return a.__bridge_id__},serialize:function(a){var b={};var t=typeof(a);if(t=="number"||t=="string"||t=="boolean"||t==null||t==undefined){b=a}else if(a instanceof Array){b=[];for(var i=0;i<a.length;i++){b[i]=this.serialize(a[i])}}else if(t=="function"){b.type=FABridge.TYPE_JSFUNCTION;b.value=this.getFunctionID(a)}else if(a instanceof ASProxy){b.type=FABridge.TYPE_ASINSTANCE;b.value=a.fb_instance_id}else{b.type=FABridge.TYPE_ANONYMOUS;b.value=a}return b},deserialize:function(a){var b;var t=typeof(a);if(t=="number"||t=="string"||t=="boolean"||a==null||a==undefined){b=this.handleError(a)}else if(a instanceof Array){b=[];for(var i=0;i<a.length;i++){b[i]=this.deserialize(a[i])}}else if(t=="object"){for(var i=0;i<a.newTypes.length;i++){this.addTypeDataToCache(a.newTypes[i])}for(var c in a.newRefs){this.createProxy(c,a.newRefs[c])}if(a.type==FABridge.TYPE_PRIMITIVE){b=a.value}else if(a.type==FABridge.TYPE_ASFUNCTION){b=this.getFunctionProxy(a.value)}else if(a.type==FABridge.TYPE_ASINSTANCE){b=this.getProxy(a.value)}else if(a.type==FABridge.TYPE_ANONYMOUS){b=a.value}}return b},addRef:function(a){this.target.incRef(a.fb_instance_id)},release:function(a){this.target.releaseRef(a.fb_instance_id)},handleError:function(a){if(typeof(a)=="string"&&a.indexOf("__FLASHERROR")==0){var b=a.split("||");if(FABridge.refCount>0){FABridge.refCount--}throw new Error(b[1]);return a}else{return a}}};ASProxy=function(a,b){this.bridge=a;this.typeName=b;return this};ASProxy.prototype={get:function(a){return this.bridge.deserialize(this.bridge.getPropertyFromAS(this.fb_instance_id,a))},set:function(a,b){this.bridge.setPropertyInAS(this.fb_instance_id,a,b)},call:function(a,b){this.bridge.callASMethod(this.fb_instance_id,a,b)},addRef:function(){this.bridge.addRef(this)},release:function(){this.bridge.release(this)}};
+function FABridge(target,bridgeName)
+{this.target=target;this.remoteTypeCache={};this.remoteInstanceCache={};this.remoteFunctionCache={};this.localFunctionCache={};this.bridgeID=FABridge.nextBridgeID++;this.name=bridgeName;this.nextLocalFuncID=0;FABridge.instances[this.name]=this;FABridge.idMap[this.bridgeID]=this;return this;}
+FABridge.TYPE_ASINSTANCE=1;FABridge.TYPE_ASFUNCTION=2;FABridge.TYPE_JSFUNCTION=3;FABridge.TYPE_ANONYMOUS=4;FABridge.initCallbacks={};FABridge.userTypes={};FABridge.addToUserTypes=function()
+{for(var i=0;i<arguments.length;i++)
+{FABridge.userTypes[arguments[i]]={'typeName':arguments[i],'enriched':false};}}
+FABridge.argsToArray=function(args)
+{var result=[];for(var i=0;i<args.length;i++)
+{result[i]=args[i];}
+return result;}
+function instanceFactory(objID)
+{this.fb_instance_id=objID;return this;}
+function FABridge__invokeJSFunction(args)
+{var funcID=args[0];var throughArgs=args.concat();throughArgs.shift();var bridge=FABridge.extractBridgeFromID(funcID);return bridge.invokeLocalFunction(funcID,throughArgs);}
+FABridge.addInitializationCallback=function(bridgeName,callback)
+{var inst=FABridge.instances[bridgeName];if(inst!=undefined)
+{callback.call(inst);return;}
+var callbackList=FABridge.initCallbacks[bridgeName];if(callbackList==null)
+{FABridge.initCallbacks[bridgeName]=callbackList=[];}
+callbackList.push(callback);}
+function FABridge__bridgeInitialized(bridgeName){var objects=document.getElementsByTagName("object");var ol=objects.length;var activeObjects=[];if(ol>0){for(var i=0;i<ol;i++){if(typeof objects[i].SetVariable!="undefined"){activeObjects[activeObjects.length]=objects[i];}}}
+var embeds=document.getElementsByTagName("embed");var el=embeds.length;var activeEmbeds=[];if(el>0){for(var j=0;j<el;j++){if(typeof embeds[j].SetVariable!="undefined"){activeEmbeds[activeEmbeds.length]=embeds[j];}}}
+var aol=activeObjects.length;var ael=activeEmbeds.length;var searchStr="bridgeName="+bridgeName;if((aol==1&&!ael)||(aol==1&&ael==1)){FABridge.attachBridge(activeObjects[0],bridgeName);}
+else if(ael==1&&!aol){FABridge.attachBridge(activeEmbeds[0],bridgeName);}
+else{var flash_found=false;if(aol>1){for(var k=0;k<aol;k++){var params=activeObjects[k].childNodes;for(var l=0;l<params.length;l++){var param=params[l];if(param.nodeType==1&&param.tagName.toLowerCase()=="param"&&param["name"].toLowerCase()=="flashvars"&&param["value"].indexOf(searchStr)>=0){FABridge.attachBridge(activeObjects[k],bridgeName);flash_found=true;break;}}
+if(flash_found){break;}}}
+if(!flash_found&&ael>1){for(var m=0;m<ael;m++){var flashVars=activeEmbeds[m].attributes.getNamedItem("flashVars").nodeValue;if(flashVars.indexOf(searchStr)>=0){FABridge.attachBridge(activeEmbeds[m],bridgeName);break;}}}}
+return true;}
+FABridge.nextBridgeID=0;FABridge.instances={};FABridge.idMap={};FABridge.refCount=0;FABridge.extractBridgeFromID=function(id)
+{var bridgeID=(id>>16);return FABridge.idMap[bridgeID];}
+FABridge.attachBridge=function(instance,bridgeName)
+{var newBridgeInstance=new FABridge(instance,bridgeName);FABridge[bridgeName]=newBridgeInstance;var callbacks=FABridge.initCallbacks[bridgeName];if(callbacks==null)
+{return;}
+for(var i=0;i<callbacks.length;i++)
+{callbacks[i].call(newBridgeInstance);}
+delete FABridge.initCallbacks[bridgeName]}
+FABridge.blockedMethods={toString:true,get:true,set:true,call:true};FABridge.prototype={root:function()
+{return this.deserialize(this.target.getRoot());},releaseASObjects:function()
+{return this.target.releaseASObjects();},releaseNamedASObject:function(value)
+{if(typeof(value)!="object")
+{return false;}
+else
+{var ret=this.target.releaseNamedASObject(value.fb_instance_id);return ret;}},create:function(className)
+{return this.deserialize(this.target.create(className));},makeID:function(token)
+{return(this.bridgeID<<16)+token;},getPropertyFromAS:function(objRef,propName)
+{if(FABridge.refCount>0)
+{throw new Error("You are trying to call recursively into the Flash Player which is not allowed. In most cases the JavaScript setTimeout function, can be used as a workaround.");}
+else
+{FABridge.refCount++;retVal=this.target.getPropFromAS(objRef,propName);retVal=this.handleError(retVal);FABridge.refCount--;return retVal;}},setPropertyInAS:function(objRef,propName,value)
+{if(FABridge.refCount>0)
+{throw new Error("You are trying to call recursively into the Flash Player which is not allowed. In most cases the JavaScript setTimeout function, can be used as a workaround.");}
+else
+{FABridge.refCount++;retVal=this.target.setPropInAS(objRef,propName,this.serialize(value));retVal=this.handleError(retVal);FABridge.refCount--;return retVal;}},callASFunction:function(funcID,args)
+{if(FABridge.refCount>0)
+{throw new Error("You are trying to call recursively into the Flash Player which is not allowed. In most cases the JavaScript setTimeout function, can be used as a workaround.");}
+else
+{FABridge.refCount++;retVal=this.target.invokeASFunction(funcID,this.serialize(args));retVal=this.handleError(retVal);FABridge.refCount--;return retVal;}},callASMethod:function(objID,funcName,args)
+{if(FABridge.refCount>0)
+{throw new Error("You are trying to call recursively into the Flash Player which is not allowed. In most cases the JavaScript setTimeout function, can be used as a workaround.");}
+else
+{FABridge.refCount++;args=this.serialize(args);retVal=this.target.invokeASMethod(objID,funcName,args);retVal=this.handleError(retVal);FABridge.refCount--;return retVal;}},invokeLocalFunction:function(funcID,args)
+{var result;var func=this.localFunctionCache[funcID];if(func!=undefined)
+{result=this.serialize(func.apply(null,this.deserialize(args)));}
+return result;},getTypeFromName:function(objTypeName)
+{return this.remoteTypeCache[objTypeName];},createProxy:function(objID,typeName)
+{var objType=this.getTypeFromName(typeName);instanceFactory.prototype=objType;var instance=new instanceFactory(objID);this.remoteInstanceCache[objID]=instance;return instance;},getProxy:function(objID)
+{return this.remoteInstanceCache[objID];},addTypeDataToCache:function(typeData)
+{newType=new ASProxy(this,typeData.name);var accessors=typeData.accessors;for(var i=0;i<accessors.length;i++)
+{this.addPropertyToType(newType,accessors[i]);}
+var methods=typeData.methods;for(var i=0;i<methods.length;i++)
+{if(FABridge.blockedMethods[methods[i]]==undefined)
+{this.addMethodToType(newType,methods[i]);}}
+this.remoteTypeCache[newType.typeName]=newType;return newType;},addPropertyToType:function(ty,propName)
+{var c=propName.charAt(0);var setterName;var getterName;if(c>="a"&&c<="z")
+{getterName="get"+c.toUpperCase()+propName.substr(1);setterName="set"+c.toUpperCase()+propName.substr(1);}
+else
+{getterName="get"+propName;setterName="set"+propName;}
+ty[setterName]=function(val)
+{this.bridge.setPropertyInAS(this.fb_instance_id,propName,val);}
+ty[getterName]=function()
+{return this.bridge.deserialize(this.bridge.getPropertyFromAS(this.fb_instance_id,propName));}},addMethodToType:function(ty,methodName)
+{ty[methodName]=function()
+{return this.bridge.deserialize(this.bridge.callASMethod(this.fb_instance_id,methodName,FABridge.argsToArray(arguments)));}},getFunctionProxy:function(funcID)
+{var bridge=this;if(this.remoteFunctionCache[funcID]==null)
+{this.remoteFunctionCache[funcID]=function()
+{bridge.callASFunction(funcID,FABridge.argsToArray(arguments));}}
+return this.remoteFunctionCache[funcID];},getFunctionID:function(func)
+{if(func.__bridge_id__==undefined)
+{func.__bridge_id__=this.makeID(this.nextLocalFuncID++);this.localFunctionCache[func.__bridge_id__]=func;}
+return func.__bridge_id__;},serialize:function(value)
+{var result={};var t=typeof(value);if(t=="number"||t=="string"||t=="boolean"||t==null||t==undefined)
+{result=value;}
+else if(value instanceof Array)
+{result=[];for(var i=0;i<value.length;i++)
+{result[i]=this.serialize(value[i]);}}
+else if(t=="function")
+{result.type=FABridge.TYPE_JSFUNCTION;result.value=this.getFunctionID(value);}
+else if(value instanceof ASProxy)
+{result.type=FABridge.TYPE_ASINSTANCE;result.value=value.fb_instance_id;}
+else
+{result.type=FABridge.TYPE_ANONYMOUS;result.value=value;}
+return result;},deserialize:function(packedValue)
+{var result;var t=typeof(packedValue);if(t=="number"||t=="string"||t=="boolean"||packedValue==null||packedValue==undefined)
+{result=this.handleError(packedValue);}
+else if(packedValue instanceof Array)
+{result=[];for(var i=0;i<packedValue.length;i++)
+{result[i]=this.deserialize(packedValue[i]);}}
+else if(t=="object")
+{for(var i=0;i<packedValue.newTypes.length;i++)
+{this.addTypeDataToCache(packedValue.newTypes[i]);}
+for(var aRefID in packedValue.newRefs)
+{this.createProxy(aRefID,packedValue.newRefs[aRefID]);}
+if(packedValue.type==FABridge.TYPE_PRIMITIVE)
+{result=packedValue.value;}
+else if(packedValue.type==FABridge.TYPE_ASFUNCTION)
+{result=this.getFunctionProxy(packedValue.value);}
+else if(packedValue.type==FABridge.TYPE_ASINSTANCE)
+{result=this.getProxy(packedValue.value);}
+else if(packedValue.type==FABridge.TYPE_ANONYMOUS)
+{result=packedValue.value;}}
+return result;},addRef:function(obj)
+{this.target.incRef(obj.fb_instance_id);},release:function(obj)
+{this.target.releaseRef(obj.fb_instance_id);},handleError:function(value)
+{if(typeof(value)=="string"&&value.indexOf("__FLASHERROR")==0)
+{var myErrorMessage=value.split("||");if(FABridge.refCount>0)
+{FABridge.refCount--;}
+throw new Error(myErrorMessage[1]);return value;}
+else
+{return value;}}};ASProxy=function(bridge,typeName)
+{this.bridge=bridge;this.typeName=typeName;return this;};ASProxy.prototype={get:function(propName)
+{return this.bridge.deserialize(this.bridge.getPropertyFromAS(this.fb_instance_id,propName));},set:function(propName,value)
+{this.bridge.setPropertyInAS(this.fb_instance_id,propName,value);},call:function(funcName,args)
+{this.bridge.callASMethod(this.fb_instance_id,funcName,args);},addRef:function(){this.bridge.addRef(this);},release:function(){this.bridge.release(this);}};
