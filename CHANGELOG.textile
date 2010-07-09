@@ -3,7 +3,8 @@ h1. Changelog
 h2. Edge
 
 * new features:
-** none
+** callbacks for connection open/close and authentication
+** automatic reconnect after connection broken
 * bugfixes:
 ** catch exeption on invalid format of received data
 

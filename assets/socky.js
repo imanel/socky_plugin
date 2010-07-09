@@ -4,16 +4,33 @@ WEB_SOCKET_SWF_LOCATION = "/javascripts/socky/WebSocketMain.swf";
 WEB_SOCKET_DEBUG = false;
 
 Socky = function(host, port, params) {
-  instance = this;
+  this.host = host;
+  this.port = port;
+  this.params = params;
+  this.connect();
+};
 
-  var ws = new WebSocket(host + ':' + port + '/?' + params);
+// Socky states
+Socky.CONNECTING = 0;
+Socky.AUTHENTICATING = 1;
+Socky.OPEN = 2;
+Socky.CLOSED = 3;
+Socky.UNAUTHENTICATED = 4;
+
+Socky.prototype.connect = function() {
+  var instance = this;
+  instance.state = Socky.CONNECTING;
+
+  var ws = new WebSocket(this.host + ':' + this.port + '/?' + this.params);
   ws.onopen = function() { instance.onopen(); };
   ws.onmessage = function(evt) { instance.onmessage(evt); };
   ws.onclose = function() { instance.onclose(); };
   ws.onerror = function() { instance.onerror(); };
 };
 
-Socky.prototype.onopen = function() {};
+Socky.prototype.onopen = function() {
+  this.state = Socky.AUTHENTICATING;
+};
 
 Socky.prototype.onmessage = function(evt) {
   try {
@@ -22,16 +39,35 @@ Socky.prototype.onmessage = function(evt) {
       case "message":
         this.respond_to_message(request.body);
         break;
+      case "authentication":
+        if(request.body == "success") {
+          this.respond_to_authentication_success();
+        } else {
+          this.respond_to_authentication_failure();
+        }
+        break;
     }
   } catch (e) {
     console.error(e.toString());
   }
 };
 
-Socky.prototype.onclose = function() {};
+Socky.prototype.onclose = function() {
+  if(this.state != Socky.CLOSED && this.state != Socky.UNAUTHENTICATED) {
+    setTimeout(function(instance) { instance.connect(); }, 1000, this);
+  }
+};
 
 Socky.prototype.onerror = function() {};
 
 Socky.prototype.respond_to_message = function(msg) {
   eval(msg);
+};
+
+Socky.prototype.respond_to_authentication_success = function() {
+  this.state = Socky.OPEN;
+};
+
+Socky.prototype.respond_to_authentication_failure = function() {
+  this.state = Socky.UNAUTHENTICATED;
 };
