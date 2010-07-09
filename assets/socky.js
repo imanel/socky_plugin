@@ -3,20 +3,31 @@ WEB_SOCKET_SWF_LOCATION = "/javascripts/socky/WebSocketMain.swf";
 // Set this to dump debug message from Flash to console.log:
 WEB_SOCKET_DEBUG = false;
 
-function socky(host, port, params) {
+Socky = function(host, port, params) {
+  instance = this;
+
   var ws = new WebSocket(host + ':' + port + '/?' + params);
-  ws.onmessage = function (evt) { parse_socky_request(evt.data) };
-}
+  ws.onopen = function() { instance.onopen(); };
+  ws.onmessage = function(evt) { instance.onmessage(evt); };
+  ws.onclose = function() { instance.onclose(); };
+  ws.onerror = function() { instance.onerror(); };
+};
 
-function parse_socky_request(request) {
-  req = JSON.parse(request);
-  switch (req["type"]) {
+Socky.prototype.onopen = function() {};
+
+Socky.prototype.onmessage = function(evt) {
+  var request = JSON.parse(evt.data);
+  switch (request.type) {
     case "message":
-      eval_socky_message(req["body"]);
-      break
+      this.respond_to_message(request.body);
+      break;
   }
-}
+};
 
-function eval_socky_message(msg) {
+Socky.prototype.onclose = function() {};
+
+Socky.prototype.onerror = function() {};
+
+Socky.prototype.respond_to_message = function(msg) {
   eval(msg);
-}
+};
