@@ -16,11 +16,15 @@ Socky = function(host, port, params) {
 Socky.prototype.onopen = function() {};
 
 Socky.prototype.onmessage = function(evt) {
-  var request = JSON.parse(evt.data);
-  switch (request.type) {
-    case "message":
-      this.respond_to_message(request.body);
-      break;
+  try {
+    var request = JSON.parse(evt.data);
+    switch (request.type) {
+      case "message":
+        this.respond_to_message(request.body);
+        break;
+    }
+  } catch (e) {
+    console.error(e.toString());
   }
 };
 
