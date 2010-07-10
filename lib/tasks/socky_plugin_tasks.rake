@@ -2,7 +2,7 @@ require 'fileutils'
 
 SOCKY_SCRIPTS = ['/socky.js', '/socky']
 SOURCE_PREFIX = File.join(File.dirname(__FILE__), '..', '..', 'assets')
-DEST_PREFIX = File.join(RAILS_ROOT, 'public', 'javascripts')
+DEST_PREFIX = Rails.root.join('public', 'javascripts').to_s
 
 namespace :socky do
   desc 'Install the Socky scripts and create configuration file'
@@ -16,13 +16,13 @@ namespace :socky do
 
   task :create_config do
     source = SOURCE_PREFIX + '/socky_hosts.yml'
-    dest = File.join(RAILS_ROOT, 'config', 'socky_hosts.yml')
+    dest = Rails.root.join('config', 'socky_hosts.yml').to_s
     if File.exists?(dest)
-      puts "Removing #{dest}..."
+      puts "Removing #{dest}."
       FileUtils.rm_rf dest
     end
     begin
-      puts "Copying to #{dest}..."
+      puts "Copying to #{dest}."
       FileUtils.cp_r source, dest
       puts "Successfully updated #{dest}."
     rescue
@@ -36,11 +36,11 @@ namespace :socky do
       source = SOURCE_PREFIX + file_suffix
       dest = DEST_PREFIX + file_suffix
       if File.exists?(dest)
-        puts "Removing #{dest}..."
+        puts "Removing #{dest}."
         FileUtils.rm_rf dest
       end
       begin
-        puts "Copying to #{dest}..."
+        puts "Copying to #{dest}."
         FileUtils.cp_r source, dest
         puts "Successfully updated #{dest}."
       rescue

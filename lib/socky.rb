@@ -3,7 +3,7 @@ require 'websocket'
 require 'socky/render_extension'
 
 module Socky
-  CONFIG = YAML::load(ERB.new(IO.read("#{RAILS_ROOT}/config/socky_hosts.yml")).result).freeze
+  CONFIG = YAML::load(ERB.new(IO.read(Rails.root.join("config","socky_hosts.yml"))).result).freeze
 
   class << self
 
