@@ -35,37 +35,38 @@ module Socky
         end
 
         def render_for_socky(data, options = {})
+          Socky.deprecation_warning "Using render :socky is depricated and will be removed before stable version. Please use Socky.send instead."
           if !options or !options.is_a?(Hash)
-            return Socky.send_to_all(data)
+            return Socky.send(data)
           end
 
           case options[:type]
             when :send_to_all
-              Socky.send_to_all(data)
+              Socky.send(data)
             when :send_to_channels
               socky_needs options, :channels
-              Socky.send_to_channels(data, options[:channels])
+              Socky.send(data, :to => {:channels => options[:channels]})
             when :send_to_channel
               socky_needs options, :channel
-              Socky.send_to_channel(data, options[:channel])
+              Socky.send(data, :to => {:channels => options[:channel]})
             when :send_to_client
               socky_needs options, :client_id
-              Socky.send_to_client(data, options[:client_id])
+              Socky.send(data, :to => {:clients => options[:client_id]})
             when :send_to_clients
               socky_needs options, :client_ids
-              Socky.send_to_clients(data, options[:client_ids])
+              Socky.send(data, :to => {:clients => options[:client_ids]})
             when :send_to_client_on_channel
               socky_needs options, :client_id, :channel
-              Socky.send_to_client_on_channel(data, options[:client_id], options[:channel])
+              Socky.send(data, :to => {:clients => options[:client_id], :channels => options[:channel]})
             when :send_to_clients_on_channel
               socky_needs options, :client_ids, :channel
-              Socky.send_to_clients_on_channel(data, options[:client_ids], options[:channel])
+              Socky.send(data, :to => {:clients => options[:client_ids], :channels => options[:channel]})
             when :send_to_client_on_channels
               socky_needs options, :client_id, :channels
-              Socky.send_to_client_on_channels(data, options[:client_id], options[:channels])
+              Socky.send(data, :to => {:clients => options[:client_id], :channels => options[:channels]})
             when :send_to_clients_on_channels
               socky_needs options, :client_ids, :channels
-              Socky.send_to_clients_on_channels(data, options[:client_ids], options[:channels])
+              Socky.send(data, :to => {:clients => options[:client_ids], :channels => options[:channels]})
           end
         end
 

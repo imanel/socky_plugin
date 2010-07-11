@@ -5,6 +5,9 @@ h2. Edge
 * new features:
 ** callbacks for connection open/close and authentication
 ** automatic reconnect after connection broken
+** new syntax of sending message(Socky.send instead of render :socky)
+** deprecation of old syntax(render :socky and Socky.send_to_all, send_to_clients etc.)
+** new syntax is compatybile with rails 3
 * bugfixes:
 ** catch exeption on invalid format of received data
 
