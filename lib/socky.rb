@@ -103,6 +103,12 @@ module Socky
           :channels => except_channels,
         }
       }
+
+      [:to, :except].each do |type|
+        hash[type].reject! { |key,val| val.nil? }
+        hash.delete(type) if hash[type].empty?
+      end
+
       send_data(hash)
     end
 
