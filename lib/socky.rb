@@ -76,38 +76,34 @@ module Socky
 
     def send_message(data, opts = {})
       to = opts[:to] || {}
+      except = opts[:except] || {}
 
-      unless to.is_a?(Hash)
+      unless to.is_a?(Hash) && except.is_a?(Hash)
         puts "recipiend data should be in hash format"
         return
       end
 
-      clients = to[:client] || to[:clients]
-      channels = to[:channel] || to[:channels]
+      to_clients = to[:client] || to[:clients]
+      to_channels = to[:channel] || to[:channels]
+      except_clients = except[:client] || except[:clients]
+      except_channels = except[:channel] || except[:channels]
 
       # If clients or channels are non-nil but empty then there's no users to target message
-      return if (clients.is_a?(Array) && clients.empty?) || (channels.is_a?(Array) && channels.empty?)
+      return if (to_clients.is_a?(Array) && to_clients.empty?) || (to_channels.is_a?(Array) && to_channels.empty?)
 
       hash = {
         :command  => :broadcast,
-        :type     => type_from_options(clients, channels),
-        :clients  => clients,
-        :channels => channels,
-        :body     => data
+        :body     => data,
+        :to => {
+          :clients  => to_clients,
+          :channels => to_channels,
+        },
+        :except => {
+          :clients  => except_clients,
+          :channels => except_channels,
+        }
       }
       send_data(hash)
-    end
-
-    def type_from_options(clients, channels)
-      if clients.nil? && channels.nil?
-        :to_channels
-      elsif clients.nil?
-        :to_channels
-      elsif channels.nil?
-        :to_clients
-      else
-        :to_clients_on_channels
-      end
     end
 
     def send_query(type)

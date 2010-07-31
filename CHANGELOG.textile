@@ -8,6 +8,7 @@ h2. Edge
 ** new syntax of sending message(Socky.send instead of render :socky)
 ** deprecation of old syntax(render :socky and Socky.send_to_all, send_to_clients etc.)
 ** new syntax is compatybile with rails 3
+** option to exclude clients/channels
 * bugfixes:
 ** catch exeption on invalid format of received data
 
