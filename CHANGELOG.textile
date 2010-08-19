@@ -1,5 +1,12 @@
 h1. Changelog
 
+h2. 0.1.1 / 2010-08-19
+
+* new features:
+** socky is now compatible with any flash-enabled android phones(not tested on other brands)
+* bugfixes:
+** none
+
 h2. 0.1.0 / 2010-08-03
 
 *IMPORTANT! This version will not work with gem version lower than 0.1.0*
