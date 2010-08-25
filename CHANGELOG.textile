@@ -1,5 +1,12 @@
 h1. Changelog
 
+h2. 0.1.2 / 2010-08-25
+
+* new features:
+** socky should be working with all flash and flash-lite enabled devices
+* bugfixes:
+** fexed a bug that wss doesn't accept officialy signed certificates.
+
 h2. 0.1.1 / 2010-08-19
 
 * new features:
