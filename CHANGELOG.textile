@@ -1,5 +1,10 @@
 h1. Changelog
 
+h2. Edge
+
+* new features:
+** removed old syntax
+
 h2. 0.1.2 / 2010-08-25
 
 * new features:
