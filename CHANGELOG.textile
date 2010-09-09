@@ -4,7 +4,6 @@ h2. Edge
 
 * new features:
 ** removed old syntax
-** renamed Socky.send to Socky.push (it should not overload "send" method)
 
 h2. 0.1.2 / 2010-08-25
 

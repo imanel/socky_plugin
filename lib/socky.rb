@@ -7,13 +7,13 @@ module Socky
 
   class << self
 
-    def push(*args, &block)
+    def send(*args, &block)
       options = normalize_options(*args, &block)
-      push_message(options.delete(:data), options)
+      send_message(options.delete(:data), options)
     end
 
     def show_connections
-      push_query(:show_connections)
+      send_query(:show_connections)
     end
 
     def hosts
@@ -47,7 +47,7 @@ module Socky
       options
     end
 
-    def push_message(data, opts = {})
+    def send_message(data, opts = {})
       to = opts[:to] || {}
       except = opts[:except] || {}
 
@@ -82,19 +82,19 @@ module Socky
         hash.delete(type) if hash[type].empty?
       end
 
-      push_data(hash)
+      send_data(hash)
     end
 
-    def push_query(type)
+    def send_query(type)
       hash = {
         :command  => :query,
         :type     => type
       }
-      push_data(hash, true)
+      send_data(hash, true)
     end
 
 
-    def push_data(hash, response = false)
+    def send_data(hash, response = false)
       res = []
       hosts.each do |address|
         begin
