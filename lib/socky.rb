@@ -79,7 +79,7 @@ module Socky
       }
 
       [:to, :except].each do |type|
-        hash[type].reject! { |key,val| val.nil? }
+        hash[type].reject! { |key,val| val.nil? || (type == :except && val.empty?)}
         hash.delete(type) if hash[type].empty?
       end
 
