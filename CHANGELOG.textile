@@ -1,6 +1,6 @@
 h1. Changelog
 
-h2. Edge
+h2. 0.2.0 / 2010-09-11
 
 * new features:
 ** removed old syntax
