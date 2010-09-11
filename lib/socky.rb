@@ -44,6 +44,7 @@ module Socky
         options.merge!(:data => data.to_s)
       end
 
+      options[:data] = options[:data].to_s
       options
     end
 

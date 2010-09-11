@@ -4,6 +4,8 @@ h2. Edge
 
 * new features:
 ** removed old syntax
+* bugfixes:
+** error when trying to call Socky.send from model
 
 h2. 0.1.2 / 2010-08-25
 
