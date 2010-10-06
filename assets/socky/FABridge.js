@@ -1,6 +1,7 @@
 /*
 Copyright 2006 Adobe Systems Incorporated
 */
+
 function FABridge(target,bridgeName)
 {this.target=target;this.remoteTypeCache={};this.remoteInstanceCache={};this.remoteFunctionCache={};this.localFunctionCache={};this.bridgeID=FABridge.nextBridgeID++;this.name=bridgeName;this.nextLocalFuncID=0;FABridge.instances[this.name]=this;FABridge.idMap[this.bridgeID]=this;return this;}
 FABridge.TYPE_ASINSTANCE=1;FABridge.TYPE_ASFUNCTION=2;FABridge.TYPE_JSFUNCTION=3;FABridge.TYPE_ANONYMOUS=4;FABridge.initCallbacks={};FABridge.userTypes={};FABridge.addToUserTypes=function()
@@ -67,7 +68,7 @@ return result;},getTypeFromName:function(objTypeName)
 {return this.remoteTypeCache[objTypeName];},createProxy:function(objID,typeName)
 {var objType=this.getTypeFromName(typeName);instanceFactory.prototype=objType;var instance=new instanceFactory(objID);this.remoteInstanceCache[objID]=instance;return instance;},getProxy:function(objID)
 {return this.remoteInstanceCache[objID];},addTypeDataToCache:function(typeData)
-{newType=new ASProxy(this,typeData.name);var accessors=typeData.accessors;for(var i=0;i<accessors.length;i++)
+{var newType=new ASProxy(this,typeData.name);var accessors=typeData.accessors;for(var i=0;i<accessors.length;i++)
 {this.addPropertyToType(newType,accessors[i]);}
 var methods=typeData.methods;for(var i=0;i<methods.length;i++)
 {if(FABridge.blockedMethods[methods[i]]==undefined)
