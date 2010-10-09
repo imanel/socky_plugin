@@ -1,5 +1,12 @@
 h1. Changelog
 
+h2. 0.2.1 / 2010-10-09
+
+* new features:
+** new callbacks
+* bugfixes:
+** none
+
 h2. 0.2.0 / 2010-09-11
 
 * new features:
