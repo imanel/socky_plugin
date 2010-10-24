@@ -1,5 +1,12 @@
 h1. Changelog
 
+h2. 0.3.0 / 2010-10-24
+
+* new features:
+** removal of Rails dependency - from now you can use Socky plugin in any Ruby application
+* bugfixes:
+** use 'json' gem if available(faster than Rails implementation)
+
 h2. 0.2.1 / 2010-10-09
 
 * new features:
