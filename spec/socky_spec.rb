@@ -1,4 +1,4 @@
-require File.dirname(__FILE__) + '/spec_helper'  
+require 'spec_helper'  
 
 describe Socky do
   it "should have config in hash form" do
@@ -27,30 +27,9 @@ describe Socky do
         Socky.should_receive(:send_data).with({:command => :broadcast, :body => "test"})
         Socky.send("test")
       end
-      it "when block given" do
-        Socky.should_receive(:send_data).with({:command => :broadcast, :body => "test"})
-        Socky.send do |page|
-          page << "test"
-        end
-      end
       it "when hash given" do
         Socky.should_receive(:send_data).with({:command => :broadcast, :body => "test"})
         Socky.send({:data => "test"})
-      end
-    end
-    context "with block" do
-      it "should allow javascript helpers" do
-        Socky.should_receive(:send_data).with({:command => :broadcast, :body => "alert(\"test!\");"})
-        Socky.send do |page|
-          page.alert("test!")
-        end
-      end
-      it "should handle variables from current context" do
-        phrase = "test phrase"
-        Socky.should_receive(:send_data).with({:command => :broadcast, :body => phrase})
-        Socky.send do |page|
-          page << phrase
-        end
       end
     end
     context "should handle recipient conditions for" do

@@ -1,9 +1,17 @@
 require "yaml"
-require 'websocket'
-require 'socky/java_script_generator'
+require File.dirname(__FILE__) + '/socky/java_script_generator'
+require File.dirname(__FILE__) + '/socky/json'
+require File.dirname(__FILE__) + '/socky/websocket'
 
 module Socky
-  CONFIG = YAML::load(ERB.new(IO.read(Rails.root.join("config","socky_hosts.yml"))).result).freeze
+  
+  if defined?(Rails)
+    CONFIG_PATH = Rails.root.join("config","socky_hosts.yml")
+  else
+    CONFIG_PATH = "socky_hosts.yml"
+  end unless defined?(CONFIG_PATH)
+
+  CONFIG = YAML.load_file(CONFIG_PATH).freeze
 
   class << self
 
@@ -21,11 +29,7 @@ module Socky
     end
 
     def random_host
-      hosts[rand(hosts.size)] # Rails 3 break Array#rand()
-    end
-
-    def deprecation_warning(msg)
-      Rails.logger.warn "DEPRECATION WARNING: " + msg.to_s
+      hosts[rand(hosts.size)]
     end
 
   private
@@ -94,7 +98,6 @@ module Socky
       send_data(hash, true)
     end
 
-
     def send_data(hash, response = false)
       res = []
       hosts.each do |address|
@@ -109,8 +112,9 @@ module Socky
           @socket.close if @socket && !@socket.tcp_socket.closed?
         end
       end
-      res.collect {|r| ActiveSupport::JSON.decode(r)["body"] } if response
+      res.collect {|r| Socky::JSON.decode(r)["body"] } if response
     end
 
   end
+
 end
