@@ -1,5 +1,12 @@
 h1. Changelog
 
+h2. 0.3.1 / 2010-10-26
+
+* new features:
+** none
+* bugfixes
+** ie7 should now properly reconnect after connection is broken
+
 h2. 0.3.0 / 2010-10-24
 
 * new features:
