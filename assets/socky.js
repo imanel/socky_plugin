@@ -109,5 +109,6 @@ Socky.prototype.respond_to_message = function(msg) {
 // This usually happens when user lost his connection or when Socky server is down.
 // At default it will try to reconnect after 1 second.
 Socky.prototype.respond_to_disconnect = function() {
-	setTimeout(function(instance) { instance.connect(); }, 1000, this);
-};
+    var instance = this;
+    setTimeout(function() { instance.connect(); }, 1000);
+}
