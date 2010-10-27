@@ -4,10 +4,10 @@ Socky is push server for Ruby based on WebSockets. It allows you to break border
 
 h2. Getting Started
 
-* Install the "socky gem":http://github.com/imanel/socky_gem
+* Install the "socky server gem":http://github.com/socky/socky-server-ruby
 * "Install":http://wiki.github.com/imanel/socky_plugin/install the plugin
 * Read up about its "Usage":http://wiki.github.com/imanel/socky_plugin/usage, "Configuration":http://wiki.github.com/imanel/socky_plugin/configuration and "Customizing JavaScript":http://wiki.github.com/imanel/socky_plugin/customizing-javascript
-* Try "Example Application":http://github.com/imanel/socky_example or "demo page":http://sockydemo.imanel.org
+* Try "Example Application":http://github.com/socky/socky-example or "demo page":http://sockydemo.imanel.org
 * Fork and Contribute your own modifications
 
 h2. License
