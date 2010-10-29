@@ -1,5 +1,7 @@
 h1. Socky
 
+h2{color:red}. Socky plugin was moved to new "socky organization":http://github.com/socky account and splitted to 3 parts: "socky ruby client":http://github.com/socky/socky-client-ruby, "rails bindings":http://github.com/socky/socky-client-rails and "javascript files":http://github.com/socky/socky-js. This repo will no longer be maintained so please move there.
+
 Socky is push server for Ruby based on WebSockets. It allows you to break border between your application and client browser by letting the server initialize a connection and push data to the client.
 
 h2. Getting Started
